@@ -1,0 +1,124 @@
+html, body {
+    height: 100vh;
+    width: 100vw;
+    margin: 0;
+    padding: 0;
+    background-color: #090d12;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.login-card {
+    background: #141b24;
+    border: 1px solid #212c3d;
+    padding: 35px 30px;
+    border-radius: 14px;
+    width: 360px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: fadeInCard 0.8s ease-in-out;
+}
+
+.logo-container {
+    margin-bottom: 15px;
+}
+
+.login-logo {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #ffd700;
+    box-shadow: 0 0 25px rgba(0, 210, 255, 0.6);
+    animation: pulseLogo 2s infinite ease-in-out;
+}
+
+.login-card h2 {
+    color: #ffffff;
+    margin: 0 0 5px 0;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.subtitle {
+    color: #94a3b8;
+    font-size: 12px;
+    margin-bottom: 25px;
+}
+
+form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-group i {
+    position: absolute;
+    left: 14px;
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 10px 10px 10px 40px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    color: #ffffff;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.input-group input:focus {
+    border-color: #00d2ff;
+    box-shadow: 0 0 5px rgba(0, 210, 255, 0.3);
+}
+
+.error-msg {
+    font-size: 11px;
+    min-height: 16px;
+    font-weight: 600;
+}
+
+.btn-login {
+    background: linear-gradient(135deg, #00d2ff, #0099ff);
+    color: #0f172a;
+    border: none;
+    padding: 10px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.2s;
+}
+
+.btn-login:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+@keyframes pulseLogo {
+    0% { transform: scale(0.95); box-shadow: 0 0 15px rgba(0, 210, 255, 0.4); }
+    50% { transform: scale(1.06); box-shadow: 0 0 30px rgba(0, 210, 255, 0.8); }
+    100% { transform: scale(0.95); box-shadow: 0 0 15px rgba(0, 210, 255, 0.4); }
+}
+
+@keyframes fadeInCard {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}

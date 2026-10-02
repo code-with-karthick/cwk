@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CWK Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f3f4f6; color: #1f2937; margin: 0; display: flex; }
+        
+        /* 5-SECONDS ANIMATED SPLASH SCREEN */
+        #splashScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #090d12;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            transition: opacity 0.8s ease;
+        }
+        .splash-logo-img {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #ffd700;
+            box-shadow: 0 0 35px rgba(0, 210, 255, 0.8);
+            animation: pulseGlow 1.5s infinite alternate;
+        }
+        .splash-title {
+            color: #ffffff;
+            margin-top: 20px;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
+        }
+        .splash-loader {
+            width: 180px;
+            height: 4px;
+            background: #1f2a3a;
+            border-radius: 4px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        .splash-loader span {
+            display: block;
+            width: 0%;
+            height: 100%;
+            background: #00d2ff;
+            border-radius: 4px;
+            animation: loadProgress 5s linear forwards;
+        }
+        @keyframes pulseGlow {
+            from { transform: scale(0.95); box-shadow: 0 0 15px rgba(0, 210, 255, 0.4); }
+            to { transform: scale(1.08); box-shadow: 0 0 40px rgba(0, 210, 255, 0.9); }
+        }
+        @keyframes loadProgress {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+
+        /* SIDEBAR & APP LAYOUT */
+        .sidebar { width: 240px; background: #ffffff; height: 100vh; padding: 25px; box-sizing: border-box; border-right: 1px solid #e5e7eb; }
+        .sidebar h2 { color: #dc2626; font-size: 20px; margin-top: 0; }
+        .sidebar p { color: #4b5563; padding: 10px 14px; border-radius: 6px; cursor: pointer; margin: 8px 0; font-weight: 500; }
+        .sidebar p:hover, .sidebar p.active-menu { background: #fee2e2; color: #dc2626; font-weight: bold; }
+        
+        .main-content { flex: 1; padding: 30px; box-sizing: border-box; overflow-y: auto; height: 100vh; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background: #ffffff; padding: 15px 25px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .filter-box { display: flex; gap: 10px; align-items: center; }
+        .filter-box input { background: #f9fafb; border: 1px solid #d1d5db; color: #1f2937; padding: 6px 10px; border-radius: 6px; }
+        .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; text-decoration: none; display: inline-block; }
+        .btn-today { background: #10b981; }
+        .btn-apply { background: #dc2626; }
+        .btn-reset { background: #6b7280; }
+        .btn-edit { background: #f59e0b; padding: 5px 10px; font-size: 12px; margin-right: 5px; }
+        .btn-delete { background: #ef4444; padding: 5px 10px; font-size: 12px; }
+        
+        /* FLOATING CARDS ANIMATION */
+        .cards-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+        .card { 
+            background: #ffffff; 
+            padding: 20px; 
+            border-radius: 10px; 
+            border-left: 5px solid #dc2626; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+        .card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 10px 20px rgba(220, 38, 38, 0.15);
+        }
+        .card h3 { margin: 0; font-size: 26px; color: #111827; }
+        .card p { margin: 5px 0 0; color: #6b7280; font-size: 13px; font-weight: bold; }
+        
+        .section-box { background: #ffffff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; max-width: 700px; }
+        .section-box h3 { color: #dc2626; margin-top: 0; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; color: #4b5563; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; background: #f9fafb; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+        th { background: #fef2f2; color: #dc2626; }
+        
+        .chart-container { 
+            background: #ffffff; 
+            padding: 20px; 
+            border-radius: 10px; 
+            max-width: 420px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+        }
+        .chart-wrapper {
+            position: relative;
+            height: 220px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 5 SECONDS ANIMATED SPLASH SCREEN -->
+    <div id="splashScreen">
+        <img src="{{ url_for('static', filename='cwklogo.png') }}" class="splash-logo-img" alt="CWK Logo">
+        <div class="splash-title">CODE WITH KARTHICK</div>
+        <div class="splash-loader"><span></span></div>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div class="app-container" id="mainAppContent" style="display:none; width:100vw; height:100vh;">
+        <div class="sidebar">
+            <h2>CWK Dashboard</h2>
+            <p class="active-menu" onclick="switchTab('overview', this)" style="margin-top: 30px;">Overview</p>
+            <p onclick="switchTab('add-entry', this)">+ Add / Edit Entry</p>
+            <p onclick="switchTab('students', this)">Students</p>
+            <p onclick="switchTab('finance', this)">Finance</p>
+            <p onclick="switchTab('reports', this)">Reports</p>
+        </div>
+
+        <div class="main-content">
+            <!-- OVERVIEW TAB -->
+            <div id="tab-overview" class="tab-content">
+                <div class="header">
+                    <div>
+                        <h2 style="margin:0; color:#dc2626;">Live Dashboard</h2>
+                        <small id="currentDateTime" style="color:#6b7280; font-weight: bold;"></small>
+                    </div>
+                    <div class="filter-box">
+                        <label>From:</label>
+                        <input type="date" id="startDate">
+                        <label>To:</label>
+                        <input type="date" id="endDate">
+                        
+                        <button class="btn btn-today" onclick="setTodayFilter()">Today</button>
+                        <button class="btn btn-apply" onclick="applyFilter()">Apply</button>
+                        <button class="btn btn-reset" onclick="resetFilter()">Reset</button>
+                    </div>
+                </div>
+
+                <div class="cards-grid">
+                    <div class="card"><h3 id="total_students">0</h3><p>Total Students</p></div>
+                    <div class="card" style="border-color: #10b981;"><h3 id="active_students">0</h3><p>Active Students</p></div>
+                    <div class="card" style="border-color: #f59e0b;"><h3 id="today_walkins">0</h3><p>Today Walk-in's</p></div>
+                    <div class="card" style="border-color: #ef4444;"><h3 id="today_admissions">0</h3><p>Today Admissions</p></div>
+                    <div class="card" style="border-color: #8b5cf6;"><h3 id="this_month_join">0</h3><p>This Month Join</p></div>
+                    <div class="card" style="border-color: #10b981;"><h3 id="prev_month_join">0</h3><p>Prev Month Join</p></div>
+                    <div class="card" style="border-color: #3b82f6;"><h3 id="this_year_join">0</h3><p>This Year Join</p></div>
+                    <div class="card" style="border-color: #f97316;"><h3 id="certificate_issued">0</h3><p>Certificate Issued</p></div>
+                    <div class="card" style="border-color: #ef4444;"><h3 id="pending_revenue">₹0</h3><p>Pending Revenue</p></div>
+                    <div class="card" style="border-color: #10b981;"><h3 id="study_material_distributed">0</h3><p>Study Materials</p></div>
+                    <div class="card" style="border-color: #06b6d4;"><h3 id="amount_paid">₹0</h3><p>Amount Paid</p></div>
+                    <div class="card" style="border-color: #a855f7;"><h3 id="balance_due">₹0</h3><p>Balance Due</p></div>
+                </div>
+
+                <div class="chart-container">
+                    <h3>Course Enrollments Overview</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="courseChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ADD / EDIT ENTRY TAB -->
+            <div id="tab-add-entry" class="tab-content" style="display:none;">
+                <div class="header"><h2 style="margin:0; color:#dc2626;" id="formTitle">New Student Entry</h2></div>
+                <div class="section-box">
+                    <form id="studentForm" onsubmit="submitStudentForm(event)">
+                        <input type="hidden" id="entry_id">
+                        <div class="form-group">
+                            <label>Student Name:</label>
+                            <input type="text" id="entry_name" required placeholder="Enter student full name">
+                        </div>
+                        <div class="form-group">
+                            <label>Course Name:</label>
+                            <input type="text" id="entry_course" list="courseList" required placeholder="Select or type course name">
+                            <datalist id="courseList">
+                                <option value="Python">
+                                <option value="Java">
+                                <option value="Web Dev">
+                                <option value="Data Science">
+                                <option value="Full Stack">
+                                <option value="UI/UX Design">
+                            </datalist>
+                        </div>
+                        <div class="form-group">
+                            <label>Status:</label>
+                            <select id="entry_status">
+                                <option value="Active">Active</option>
+                                <option value="Completed">Completed</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Admission Date:</label>
+                            <input type="date" id="entry_date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Base Fee (₹):</label>
+                            <input type="number" id="entry_base_fee" required placeholder="15000">
+                        </div>
+                        <div class="form-group">
+                            <label>Amount Paid (₹):</label>
+                            <input type="number" id="entry_paid" required placeholder="10000">
+                        </div>
+                        <div class="form-group">
+                            <label>Certificate Issued? (1 for Yes, 0 for No):</label>
+                            <input type="number" id="entry_certificate" value="0" min="0" max="1">
+                        </div>
+                        <button type="submit" class="btn btn-apply" style="width: 100%; padding: 12px; margin-top: 10px;" id="formSubmitBtn">Save Entry</button>
+                        <button type="button" class="btn btn-reset" style="width: 100%; padding: 10px; margin-top: 5px;" onclick="resetForm()">Cancel / Reset</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- STUDENTS TAB -->
+            <div id="tab-students" class="tab-content" style="display:none;">
+                <div class="header"><h2 style="margin:0; color:#dc2626;">Students Directory</h2></div>
+                <div class="section-box" style="max-width: 100%;">
+                    <h3>Enrolled Students List</h3>
+                    <table>
+                        <thead>
+                            <tr><th>Name</th><th>Course</th><th>Status</th><th>Admission Date</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="studentsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- FINANCE TAB -->
+            <div id="tab-finance" class="tab-content" style="display:none;">
+                <div class="header"><h2 style="margin:0; color:#dc2626;">Finance & Payments</h2></div>
+                <div class="cards-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="card"><h3 id="fin_paid">₹0</h3><p>Total Collected (Paid)</p></div>
+                    <div class="card" style="border-color: #ef4444;"><h3 id="fin_due">₹0</h3><p>Total Balance Due</p></div>
+                </div>
+                <div class="section-box" style="max-width: 100%;">
+                    <h3>Fee Payment Records</h3>
+                    <table>
+                        <thead>
+                            <tr><th>Student Name</th><th>Course</th><th>Base Fee</th><th>Amount Paid</th><th>Balance Due</th></tr>
+                        </thead>
+                        <tbody id="financeTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- REPORTS TAB -->
+            <div id="tab-reports" class="tab-content" style="display:none;">
+                <div class="header"><h2 style="margin:0; color:#dc2626;">Reports & Analytics</h2></div>
+                <div class="cards-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="card"><h3 id="rep_certificates">0</h3><p>Certificates Issued</p></div>
+                    <div class="card" style="border-color: #10b981;"><h3 id="rep_total">0</h3><p>Total Records Analyzed</p></div>
+                </div>
+                <div class="section-box" style="max-width: 100%;">
+                    <h3>Performance Summary Report</h3>
+                    <p>All active and completed course enrollments are successfully synchronized with the central database.</p>
+                    <br>
+                    <a href="/download-report" class="btn btn-today" style="padding: 12px 20px;">📥 Download Reports as Excel</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allStudentsData = []; // Store students list globally for easy editing
+
+        document.addEventListener("DOMContentLoaded", () => {
+            setTimeout(() => {
+                const splash = document.getElementById('splashScreen');
+                splash.style.opacity = '0';
+                setTimeout(() => {
+                    splash.style.display = 'none';
+                    document.getElementById('mainAppContent').style.display = 'flex';
+                }, 800);
+            }, 5000);
+        });
+
+        setInterval(() => {
+            document.getElementById('currentDateTime').innerText = "Live Time: " + new Date().toLocaleString();
+        }, 1000);
+
+        document.getElementById('entry_date').valueAsDate = new Date();
+        let myChart = null;
+
+        function switchTab(tabName, element) {
+            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.sidebar p').forEach(el => el.classList.remove('active-menu'));
+            
+            document.getElementById('tab-' + tabName).style.display = 'block';
+            if(element) element.classList.add('active-menu');
+        }
+
+        async function fetchDashboardData(startDate = '', endDate = '') {
+            let url = '/api/dashboard-data';
+            if(startDate && endDate) {
+                url += `?start_date=${startDate}&end_date=${endDate}`;
+            }
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                // Save students list globally for editing
+                allStudentsData = data.students_list || [];
+                
+                document.getElementById('total_students').innerText = data.total_students;
+                document.getElementById('active_students').innerText = data.active_students;
+                document.getElementById('today_walkins').innerText = data.today_walkins;
+                document.getElementById('today_admissions').innerText = data.today_admissions;
+                document.getElementById('this_month_join').innerText = data.this_month_join;
+                document.getElementById('prev_month_join').innerText = data.prev_month_join;
+                document.getElementById('this_year_join').innerText = data.this_year_join;
+                document.getElementById('certificate_issued').innerText = data.certificate_issued;
+                document.getElementById('pending_revenue').innerText = '₹' + data.pending_revenue.toLocaleString();
+                document.getElementById('study_material_distributed').innerText = data.study_material_distributed;
+                document.getElementById('amount_paid').innerText = '₹' + data.amount_paid.toLocaleString();
+                document.getElementById('balance_due').innerText = '₹' + data.balance_due.toLocaleString();
+
+                document.getElementById('fin_paid').innerText = '₹' + data.amount_paid.toLocaleString();
+                document.getElementById('fin_due').innerText = '₹' + data.balance_due.toLocaleString();
+                
+                document.getElementById('rep_certificates').innerText = data.certificate_issued;
+                document.getElementById('rep_total').innerText = data.total_students;
+
+                let studentsHTML = '';
+                let financeHTML = '';
+                if(data.students_list) {
+                    data.students_list.forEach(s => {
+                        studentsHTML += `<tr>
+                            <td>${s.name}</td>
+                            <td>${s.course}</td>
+                            <td>${s.status}</td>
+                            <td>${s.date}</td>
+                            <td>
+                                <button class="btn btn-edit" onclick="editStudent(${s.id})">Edit</button>
+                                <button class="btn btn-delete" onclick="deleteStudent(${s.id})">Delete</button>
+                            </td>
+                        </tr>`;
+                        financeHTML += `<tr><td>${s.name}</td><td>${s.course}</td><td>₹${s.base_fee.toLocaleString()}</td><td>₹${s.paid.toLocaleString()}</td><td>₹${s.due.toLocaleString()}</td></tr>`;
+                    });
+                }
+                document.getElementById('studentsTableBody').innerHTML = studentsHTML;
+                document.getElementById('financeTableBody').innerHTML = financeHTML;
+                
+                updateChart(data.chart_labels, data.chart_data);
+            } catch (err) {
+                console.error("Error fetching live data:", err);
+            }
+        }
+
+        // EDIT STUDENT FUNCTION: Loads data into form and switches to Add/Edit tab
+        function editStudent(id) {
+            const student = allStudentsData.find(s => s.id === id);
+            if(!student) return;
+
+            document.getElementById('entry_id').value = student.id;
+            document.getElementById('entry_name').value = student.name;
+            document.getElementById('entry_course').value = student.course;
+            document.getElementById('entry_status').value = student.status;
+            document.getElementById('entry_date').value = student.date;
+            document.getElementById('entry_base_fee').value = student.base_fee;
+            document.getElementById('entry_paid').value = student.paid;
+            document.getElementById('entry_certificate').value = student.certificate !== undefined ? student.certificate : 0;
+
+            document.getElementById('formTitle').innerText = 'Edit Student Entry';
+            document.getElementById('formSubmitBtn').innerText = 'Update Entry';
+
+            // Switch to Add/Edit tab (2nd item in sidebar)
+            switchTab('add-entry', document.querySelectorAll('.sidebar p')[1]);
+        }
+
+        async function submitStudentForm(event) {
+            event.preventDefault();
+            
+            const id = document.getElementById('entry_id').value;
+            const formData = new URLSearchParams();
+            formData.append('name', document.getElementById('entry_name').value);
+            formData.append('course', document.getElementById('entry_course').value);
+            formData.append('status', document.getElementById('entry_status').value);
+            formData.append('date', document.getElementById('entry_date').value);
+            formData.append('base_fee', document.getElementById('entry_base_fee').value);
+            formData.append('paid', document.getElementById('entry_paid').value);
+            formData.append('certificate', document.getElementById('entry_certificate').value);
+
+            let url = '/add-student';
+            if(id) {
+                url = `/update-student/${id}`;
+            }
+
+            const response = await fetch(url, { method: 'POST', body: formData });
+            const result = await response.json();
+            
+            if(result.success) {
+                alert(result.message);
+                resetForm();
+                switchTab('overview', document.querySelectorAll('.sidebar p')[0]);
+                const start = document.getElementById('startDate').value;
+                const end = document.getElementById('endDate').value;
+                fetchDashboardData(start, end);
+            } else {
+                alert('Error: ' + result.message);
+            }
+        }
+
+        async function deleteStudent(id) {
+            if(confirm('Are you sure you want to delete this student record?')) {
+                const response = await fetch(`/delete-student/${id}`, { method: 'DELETE' });
+                const result = await response.json();
+                if(result.success) {
+                    alert(result.message);
+                    const start = document.getElementById('startDate').value;
+                    const end = document.getElementById('endDate').value;
+                    fetchDashboardData(start, end);
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('studentForm').reset();
+            document.getElementById('entry_id').value = '';
+            document.getElementById('entry_date').valueAsDate = new Date();
+            document.getElementById('formTitle').innerText = 'New Student Entry';
+            document.getElementById('formSubmitBtn').innerText = 'Save Entry';
+        }
+
+        function applyFilter() {
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            if(!start || !end) {
+                alert('Please select both From and To dates!');
+                return;
+            }
+            fetchDashboardData(start, end);
+        }
+
+        function setTodayFilter() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('startDate').value = today;
+            document.getElementById('endDate').value = today;
+            fetchDashboardData(today, today);
+        }
+
+        function resetFilter() {
+            setTodayFilter();
+        }
+
+        function updateChart(labels, values) {
+            const ctx = document.getElementById('courseChart').getContext('2d');
+            if(myChart) myChart.destroy();
+            
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Enrollments',
+                        data: values,
+                        backgroundColor: '#dc2626',
+                        borderRadius: 6,
+                        barPercentage: 0.4,
+                        categoryPercentage: 0.5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, ticks: { color: '#4b5563' } },
+                        x: { ticks: { color: '#4b5563' } }
+                    },
+                    plugins: { legend: { labels: { color: '#1f2937' } } }
+                }
+            });
+        }
+
+        window.onload = function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('startDate').value = today;
+            document.getElementById('endDate').value = today;
+            fetchDashboardData(today, today);
+
+            setInterval(() => {
+                const start = document.getElementById('startDate').value;
+                const end = document.getElementById('endDate').value;
+                if(start && end) {
+                    fetchDashboardData(start, end);
+                }
+            }, 2000);
+        };
+    </script>
+</body>
+</html>
